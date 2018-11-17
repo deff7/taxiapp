@@ -3,8 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 	"time"
+
+	"github.com/valyala/fasthttp"
 )
 
 type serviceHandler struct {
@@ -13,6 +14,16 @@ type serviceHandler struct {
 
 func newServiceHandler(manager *BidManager) *serviceHandler {
 	return &serviceHandler{manager: manager}
+}
+
+func (h *serviceHandler) HandleFastHTTP(ctx *fasthttp.RequestCtx) {
+	switch string(ctx.Path()) {
+	case "/get":
+		id := h.manager.GetRandomID()
+		ctx.Write([]byte(id))
+	default:
+		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
+	}
 }
 
 func (h *serviceHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -37,9 +48,14 @@ func main() {
 		}
 	}()
 
+	/*
+		ln, err := reuseport.Listen("tcp4", "localhost:8000")
+		if err != nil {
+			log.Fatalf("error in reuseport listener: %s", err)
+		}
+		log.Fatal(fasthttp.Serve(ln, newServiceHandler(manager).HandleFastHTTP))
+	*/
+
 	http.Handle("/get", newServiceHandler(manager))
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }

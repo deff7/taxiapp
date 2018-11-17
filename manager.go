@@ -38,8 +38,8 @@ func (m *BidManager) AddBid() {
 func (m *BidManager) Update() {
 	m.Lock()
 	bid := m.randomBid()
-	delete(m.bids, bid)
-	m.AddBid()
+	bid.ID = <-m.idChan
+	bid.TimesShowed = 0
 	m.Unlock()
 }
 
