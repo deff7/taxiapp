@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"time"
 )
 
@@ -15,8 +16,8 @@ func newServiceHandler(manager *BidManager) *serviceHandler {
 }
 
 func (h *serviceHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	bid := h.manager.GetRandom()
-	w.Write([]byte(bid.ID))
+	id := h.manager.GetRandomID()
+	w.Write([]byte(id))
 }
 
 func main() {
@@ -37,6 +38,8 @@ func main() {
 	}()
 
 	http.Handle("/get", newServiceHandler(manager))
-
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
